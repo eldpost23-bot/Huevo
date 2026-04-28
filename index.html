@@ -1,1 +1,402 @@
+<!DOCTYPE html>
 
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Plan Dietético">
+    <meta name="theme-color" content="#059669">
+    <title>Plan Dietético UFPC</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        input, select, button { -webkit-appearance: none; appearance: none; }
+        html, body { height: 100%; width: 100%; margin: 0; padding: 0; }
+
+```
+    .logo-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        border-radius: 16px;
+        position: relative;
+        box-shadow: 0 8px 24px rgba(5, 150, 105, 0.3);
+    }
+    
+    .logo-icon::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 28px;
+        height: 28px;
+        background: white;
+        border-radius: 50%;
+        opacity: 0.9;
+    }
+    
+    .logo-icon::after {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 20px;
+        background: white;
+        border-radius: 50% 50% 0 0;
+        top: 20%;
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 0.8;
+    }
+    
+    .gradient-text {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+    
+    .nutrition-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        font-weight: 700;
+        font-size: 20px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .badge-lac { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e; }
+    .badge-hc { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); color: #1e3a8a; }
+    .badge-pro { background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%); color: #7f1d1d; }
+    .badge-ver { background: linear-gradient(135deg, #bbf7d0 0%, #86efac 100%); color: #166534; }
+    .badge-fru { background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%); color: #92400e; }
+    .badge-gra { background: linear-gradient(135deg, #d1d5db 0%, #e5e7eb 100%); color: #374151; }
+    
+    .tab-active {
+        background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        color: white;
+        box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+    }
+    
+    .progress-bar {
+        height: 6px;
+        background: #e5e7eb;
+        border-radius: 3px;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #059669 0%, #10b981 100%);
+        transition: width 0.3s ease;
+    }
+    
+    .card-hover {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .card-hover:active {
+        transform: scale(0.98);
+    }
+</style>
+```
+
+</head>
+<body class="bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 min-h-screen p-4">
+    <div class="max-w-2xl mx-auto">
+        <!-- HEADER CON LOGO -->
+        <div class="text-center mb-8 pt-4">
+            <div class="flex items-center justify-center mb-4">
+                <div class="logo-icon"></div>
+            </div>
+            <h1 class="text-4xl font-black gradient-text mb-1">Plan Dietético</h1>
+            <p class="text-gray-600 text-sm font-medium">Policlínico Universitario UFPC</p>
+        </div>
+
+```
+    <!-- TABS -->
+    <div class="flex gap-2 mb-6 overflow-x-auto sticky top-0 z-10 bg-gradient-to-b from-emerald-50 via-teal-50 to-transparent pb-2">
+        <button id="btnPlan" class="flex-1 py-3 rounded-lg font-bold transition tab-active whitespace-nowrap text-sm">Planes</button>
+        <button id="btnRegistro" class="flex-1 py-3 rounded-lg font-bold transition bg-white text-gray-900 border-2 border-gray-200 whitespace-nowrap text-sm">Registro</button>
+        <button id="btnAgenda" class="flex-1 py-3 rounded-lg font-bold transition bg-white text-gray-900 border-2 border-gray-200 whitespace-nowrap text-sm">Historial</button>
+        <button id="btnEquiv" class="flex-1 py-3 rounded-lg font-bold transition bg-white text-gray-900 border-2 border-gray-200 whitespace-nowrap text-sm">Alimentos</button>
+        <button id="btnConfig" class="flex-1 py-3 rounded-lg font-bold transition bg-white text-gray-900 border-2 border-gray-200 whitespace-nowrap text-sm">Config</button>
+    </div>
+
+    <!-- CONTENIDO DINÁMICO -->
+    <div id="content" style="min-height: 70vh;"></div>
+</div>
+
+<script>
+    // ===== INDEXEDDB =====
+    let db;
+    const dbName = 'DietPlanDB';
+    const storeName = 'meals';
+    
+    function initDB() {
+        return new Promise((resolve) => {
+            const request = indexedDB.open(dbName, 1);
+            request.onerror = () => resolve(false);
+            request.onupgradeneeded = (event) => {
+                db = event.target.result;
+                if (!db.objectStoreNames.contains(storeName)) {
+                    db.createObjectStore(storeName, { keyPath: 'date' });
+                }
+            };
+            request.onsuccess = (event) => {
+                db = event.target.result;
+                resolve(true);
+            };
+        });
+    }
+
+    async function saveMeals() {
+        const mealsData = { date: 'mealsData', data: meals, timestamp: new Date().getTime() };
+        if (db) {
+            const transaction = db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            store.put(mealsData);
+        }
+        localStorage.setItem('mealPlan', JSON.stringify(meals));
+    }
+
+    async function loadMeals() {
+        return new Promise((resolve) => {
+            if (db) {
+                const transaction = db.transaction([storeName], 'readonly');
+                const store = transaction.objectStore(storeName);
+                const request = store.get('mealsData');
+                request.onsuccess = () => {
+                    if (request.result && request.result.data) {
+                        resolve(request.result.data);
+                    } else {
+                        const stored = localStorage.getItem('mealPlan');
+                        resolve(stored ? JSON.parse(stored) : {});
+                    }
+                };
+            } else {
+                const stored = localStorage.getItem('mealPlan');
+                resolve(stored ? JSON.parse(stored) : {});
+            }
+        });
+    }
+
+    // ===== DATOS GLOBALES =====
+    let currentTab = 'plan';
+    let selectedDay = 'rest';
+    let selectedMeal = null;
+    let selectedMealForRegistro = null;
+    let selectedDate = new Date().toISOString().split('T')[0];
+    let successMessage = '';
+    let meals = {};
+    let notificationsEnabled = localStorage.getItem('notificationsEnabled') !== 'false';
+
+    const notificationSchedule = [
+        { hora: 7, minuto: 0, titulo: 'Buenos días', mensaje: 'Hora de desayunar y registra tu comida' },
+        { hora: 10, minuto: 30, titulo: 'Media mañana', mensaje: 'Registra tu snack de media mañana' },
+        { hora: 13, minuto: 0, titulo: 'Almuerzo', mensaje: 'Es hora del almuerzo, registra lo que comiste' },
+        { hora: 16, minuto: 30, titulo: 'Media tarde', mensaje: 'Hora de merendar y registrar' },
+        { hora: 20, minuto: 0, titulo: 'Cena', mensaje: 'Es hora de cenar, registra tu comida' }
+    ];
+
+    const groupLabels = {
+        LAC: { name: 'Lácteos', icon: '🥛' },
+        HC: { name: 'Carbohidratos', icon: '🍚' },
+        PRO: { name: 'Proteínas', icon: '🍗' },
+        VER: { name: 'Verduras', icon: '🥗' },
+        FRU: { name: 'Frutas', icon: '🍎' },
+        GRA: { name: 'Grasas', icon: '🥑' }
+    };
+
+    const plans = {
+        rest: {
+            name: 'Día de Descanso',
+            Desayuno: { LAC: 0, HC: 1, PRO: 2, VER: 0, FRU: 0, GRA: 1 },
+            Almuerzo: { LAC: 1, HC: 2, PRO: 3, VER: 1, FRU: 1, GRA: 1 },
+            Merienda: { LAC: 1, HC: 1, PRO: 2, VER: 0, FRU: 1, GRA: 0 },
+            Cena: { LAC: 0, HC: 2, PRO: 2, VER: 1, FRU: 0, GRA: 1 }
+        },
+        morning: {
+            name: 'Entreno Mañana',
+            Desayuno: { LAC: 0, HC: 1, PRO: 2, VER: 0, FRU: 0, GRA: 1 },
+            'Entreno': { LAC: 1, HC: 0, PRO: 2, VER: 0, FRU: 1, GRA: 0 },
+            Almuerzo: { LAC: 1, HC: 2, PRO: 3, VER: 1, FRU: 1, GRA: 1 },
+            Merienda: { LAC: 1, HC: 1, PRO: 2, VER: 0, FRU: 1, GRA: 0 },
+            Cena: { LAC: 0, HC: 2, PRO: 2, VER: 1, FRU: 0, GRA: 1 }
+        },
+        afternoon: {
+            name: 'Entreno Tarde',
+            Desayuno: { LAC: 0, HC: 1, PRO: 2, VER: 0, FRU: 0, GRA: 1 },
+            'Media Mañana': { LAC: 1, HC: 1, PRO: 2, VER: 0, FRU: 1, GRA: 0 },
+            Almuerzo: { LAC: 1, HC: 2, PRO: 3, VER: 1, FRU: 1, GRA: 1 },
+            'Entreno': { LAC: 1, HC: 0, PRO: 2, VER: 0, FRU: 1, GRA: 0 },
+            Cena: { LAC: 0, HC: 2, PRO: 2, VER: 1, FRU: 0, GRA: 1 }
+        }
+    };
+
+    const totals = {
+        rest: { LAC: 2, HC: 6, PRO: 9, VER: 2, FRU: 2, GRA: 3 },
+        morning: { LAC: 3, HC: 6, PRO: 11, VER: 2, FRU: 3, GRA: 3 },
+        afternoon: { LAC: 3, HC: 6, PRO: 11, VER: 2, FRU: 3, GRA: 3 }
+    };
+
+    const equivalencias = {
+        LAC: ['1 vaso (200ml) de leche semidesnatada o entera', '1 vaso (200ml) de kéfir', '1 yogur (125g) desnatado natural', '1 ración (75g) de queso de Burgos', '1 ración (50g) de queso tierno de cabra'],
+        HC: ['1 unidad mediana (220g) de papa o batata', '1 ración (100g) de gnocchi (a base de papa)', '1 ración (60g) de legumbres: garbanzos, judías, lentejas', '1 fajita de trigo grande o 2 tamaño normal', '2 rebanadas de pan integral de molde', '1 ración (50g) de cereales integrales o copos de avena', '1 guarnición (45g) de arroz blanco o integral', '1 guarnición (45g) de pasta blanca o integral', '1 guarnición (45g) de noodles de arroz', '1 guarnición (45g) de quinoa', '1 guarnición (45g) de couscous o cuscús', '2 rebanadas de pan integral o 1/2 baguette (40g)', '2-4 biscotes de pan tostado integral'],
+        PRO: ['1 ración (100g) de pescado blanco: merluza, lenguado, gallo', '3 claras de huevos medianos o tamaño M (90g)', '1 ración (70g) de queso cottage', '1/2 filete (60g) de carne de ave: pollo y pavo', '1/2 filete (60g) de carne magra: ternera y cerdo', '1/2 filete (60g) de pescado azul: emperador, salmón, bonito', '2-3 lonchas de queso havarti light o similar', '1 huevo mediano o tamaño M', '2-3 lonchas (50g) de pechuga de pavo o jamón serrano magro', '1 lata pequeña de pescado en conserva', '2-3 lonchas de salmón ahumado', '1/2 ración (30g) de legumbres: garbanzos, judías, lentejas', '1 ración pequeña (30g) de queso feta', '1 ración (30g) de queso mozzarella', '1/2 vaso de soja texturizada deshidratada', '1 loncha (25g) de queso havarti light', '1/2 cacito (scoop) (15g) de proteína en polvo'],
+        VER: ['Elección libre - 200g (Verduras ad libitum)'],
+        FRU: ['Elección libre - 200g (Frutas ad libitum)'],
+        GRA: ['10-12 aceitunas pequeñas (70g)', '1/4 de aguacate (60g)', '1 ración (50g) de queso feta', '1 ración (30g) de queso mozzarella', '2 onzas (20g) de chocolate negro (min. 70%)', '1/2 puñado (15g) de frutos secos variados', '1 cucharada sopera (10g) de aceite de oliva']
+    };
+
+    function getBadgeClass(group) {
+        const badges = { LAC: 'badge-lac', HC: 'badge-hc', PRO: 'badge-pro', VER: 'badge-ver', FRU: 'badge-fru', GRA: 'badge-gra' };
+        return badges[group];
+    }
+
+    function updateTabs() {
+        document.getElementById('btnPlan').className = currentTab === 'plan' ? 'flex-1 py-3 rounded-lg font-bold transition tab-active whitespace-nowrap text-sm' : 'flex-1 py-3 rounded-lg font-bold transition bg-white text-gray-900 border-2 border-gray-200 whitespace-nowrap text-sm';
+        document.getElementById('btnRegistro').className = currentTab === 'registro' ? 'flex-1 py-3 rounded-lg font-bold transition tab-active whitespace-nowrap text-sm' : 'flex-1 py-3 rounded-lg font-bold transition bg-white text-gray-900 border-2 border-gray-200 whitespace-nowrap text-sm';
+        document.getElementById('btnAgenda').className = currentTab === 'agenda' ? 'flex-1 py-3 rounded-lg font-bold transition tab-active whitespace-nowrap text-sm' : 'flex-1 py-3 rounded-lg font-bold transition bg-white text-gray-900 border-2 border-gray-200 whitespace-nowrap text-sm';
+        document.getElementById('btnEquiv').className = currentTab === 'equivalencias' ? 'flex-1 py-3 rounded-lg font-bold transition tab-active whitespace-nowrap text-sm' : 'flex-1 py-3 rounded-lg font-bold transition bg-white text-gray-900 border-2 border-gray-200 whitespace-nowrap text-sm';
+        document.getElementById('btnConfig').className = currentTab === 'config' ? 'flex-1 py-3 rounded-lg font-bold transition tab-active whitespace-nowrap text-sm' : 'flex-1 py-3 rounded-lg font-bold transition bg-white text-gray-900 border-2 border-gray-200 whitespace-nowrap text-sm';
+    }
+
+    function render() {
+        updateTabs();
+        let html = '';
+        if (currentTab === 'plan') html = renderPlan();
+        else if (currentTab === 'registro') html = renderRegistro();
+        else if (currentTab === 'agenda') html = renderAgenda();
+        else if (currentTab === 'equivalencias') html = renderEquivalencias();
+        else if (currentTab === 'config') html = renderConfig();
+        document.getElementById('content').innerHTML = html;
+    }
+
+    function goToTab(tab) { currentTab = tab; selectedMeal = null; selectedMealForRegistro = null; render(); }
+
+    function renderPlan() {
+        return `<div class="space-y-4 pb-8"><div class="grid grid-cols-3 gap-3">${['rest','morning','afternoon'].map(day => `<button onclick="selectedDay='${day}'; selectedMeal=null; render()" class="p-4 rounded-lg font-bold text-center transition card-hover ${selectedDay === day ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white shadow-lg' : 'bg-white border-2 border-gray-200'}"><div class="text-2xl mb-1">${day === 'rest' ? '😴' : day === 'morning' ? '🌅' : '🌙'}</div><div class="text-xs">${plans[day].name}</div></button>`).join('')}</div><div class="bg-white rounded-lg p-6 shadow-lg"><h2 class="text-2xl font-bold gradient-text mb-4">${plans[selectedDay].name}</h2><div class="space-y-3 mb-6">${Object.entries(plans[selectedDay]).filter(([k]) => k !== 'name').map(([meal, raciones]) => `<button onclick="selectedMeal='${meal}'; render()" class="w-full text-left bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 rounded-lg p-4 border-l-4 border-emerald-500 transition card-hover"><p class="font-bold text-lg text-gray-900 mb-3">${meal}</p><div class="grid grid-cols-3 sm:grid-cols-6 gap-2">${['LAC','HC','PRO','VER','FRU','GRA'].map(g => `<div class="nutrition-badge ${getBadgeClass(g)}">${raciones[g]}</div>`).join('')}</div></button>`).join('')}</div>${selectedMeal ? `<div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-lg p-6 border-2 border-blue-300 mb-6"><h3 class="text-2xl font-bold text-blue-700 mb-4">${selectedMeal}</h3><div class="grid grid-cols-3 gap-3">${['LAC','HC','PRO','VER','FRU','GRA'].map(g => `<div class="bg-white rounded-lg p-4 border-2 border-blue-300 text-center"><div class="nutrition-badge ${getBadgeClass(g)} mb-2">${plans[selectedDay][selectedMeal][g]}</div><p class="text-sm font-bold text-gray-700">${groupLabels[g].name}</p></div>`).join('')}</div></div>` : ''}<div class="bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg p-4"><p class="font-bold text-lg mb-3">Total del día</p><div class="grid grid-cols-3 sm:grid-cols-6 gap-2">${['LAC','HC','PRO','VER','FRU','GRA'].map(g => `<div class="nutrition-badge ${getBadgeClass(g)}">${totals[selectedDay][g]}</div>`).join('')}</div></div></div></div>`;
+    }
+
+    function renderRegistro() {
+        const dayMeals = meals[selectedDate] || [];
+        const plan = plans[selectedDay];
+        const mealTypes = Object.keys(plan).filter(k => k !== 'name');
+        let consumed = { LAC: 0, HC: 0, PRO: 0, VER: 0, FRU: 0, GRA: 0 };
+        dayMeals.forEach(m => Object.keys(consumed).forEach(g => consumed[g] += m[g] || 0));
+
+        let html = `<div class="space-y-4 pb-8">${successMessage ? `<div class="bg-gradient-to-r from-green-100 to-emerald-100 rounded-lg p-4 border-2 border-green-500 animate-pulse"><p class="text-lg font-bold text-green-700">✅ ${successMessage}</p></div>` : ''}<div><label class="block text-sm font-bold text-gray-700 mb-2">Fecha:</label><input type="date" id="dateInput" value="${selectedDate}" class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"></div><div><label class="block text-sm font-bold text-gray-700 mb-2">Tipo de día:</label><div class="grid grid-cols-3 gap-2"><button onclick="selectedDay='rest'; render()" class="p-2 rounded-lg font-bold text-sm transition ${selectedDay === 'rest' ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white' : 'bg-gray-100'}">😴</button><button onclick="selectedDay='morning'; render()" class="p-2 rounded-lg font-bold text-sm transition ${selectedDay === 'morning' ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white' : 'bg-gray-100'}">🌅</button><button onclick="selectedDay='afternoon'; render()" class="p-2 rounded-lg font-bold text-sm transition ${selectedDay === 'afternoon' ? 'bg-gradient-to-br from-emerald-500 to-teal-500 text-white' : 'bg-gray-100'}">🌙</button></div></div><div class="bg-white rounded-lg p-4 shadow"><p class="font-bold text-gray-900 mb-3">Progreso:</p><div class="space-y-2">${['LAC','HC','PRO','VER','FRU','GRA'].map(g => {const target = totals[selectedDay][g]; const cons = consumed[g]; const percent = target > 0 ? Math.min(100, (cons / target) * 100) : 0; return `<div class="flex items-center gap-3"><div class="nutrition-badge ${getBadgeClass(g)} flex-shrink-0">${groupLabels[g].icon}</div><div class="flex-1"><div class="flex justify-between text-sm mb-1"><span class="font-bold text-gray-900">${groupLabels[g].name}</span><span class="text-gray-600">${cons}/${target}</span></div><div class="progress-bar"><div class="progress-fill" style="width: ${percent}%"></div></div></div></div>`}).join('')}</div></div><div class="bg-white rounded-lg p-4 shadow"><p class="font-bold text-gray-900 mb-3">Agregar comida:</p><div class="space-y-3"><input type="text" id="foodName" placeholder="Ej: Pechuga de pollo" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"><select id="mealType" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-emerald-500 focus:outline-none"><option value="">-- Selecciona comida --</option>${mealTypes.map(m => `<option value="${m}">${m}</option>`).join('')}</select>${selectedMealForRegistro ? `<div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border-2 border-purple-300"><p class="font-bold text-gray-900 mb-3">${selectedMealForRegistro} debe tener:</p><div class="grid grid-cols-3 gap-2">${['LAC','HC','PRO','VER','FRU','GRA'].map(g => `<div class="nutrition-badge ${getBadgeClass(g)} text-center">${plans[selectedDay][selectedMealForRegistro][g]}</div>`).join('')}</div></div>` : ''}<div class="grid grid-cols-3 gap-2">${['LAC','HC','PRO','VER','FRU','GRA'].map(g => `<div><label class="text-xs font-bold block mb-1 text-gray-700">${groupLabels[g].icon}</label><input type="number" id="val_${g}" min="0" max="10" value="0" class="w-full px-2 py-2 border-2 border-gray-300 rounded text-center font-bold focus:border-emerald-500 focus:outline-none"></div>`).join('')}</div><button onclick="addMeal()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-3 rounded-lg font-bold hover:from-emerald-700 hover:to-teal-700 transition">Agregar Comida</button></div></div>${dayMeals.length > 0 ? `<div class="bg-white rounded-lg p-4 shadow"><p class="font-bold text-gray-900 mb-3">Hoy has comido (${dayMeals.length}):</p><div class="space-y-2">${dayMeals.map((m, i) => `<div class="bg-gray-50 p-3 rounded-lg border-l-4 border-emerald-500"><div class="flex justify-between"><div><p class="font-bold text-sm text-gray-900">${m.name}</p><p class="text-xs text-gray-600">${m.type}</p><div class="flex flex-wrap gap-1 mt-1">${['LAC','HC','PRO','VER','FRU','GRA'].map(g => m[g] > 0 ? `<span class="nutrition-badge ${getBadgeClass(g)} text-xs px-2 py-1">${m[g]}</span>` : '').join('')}</div></div><button onclick="deleteMeal(${i})" class="text-red-600 text-lg font-bold hover:text-red-800">✕</button></div></div>`).join('')}</div></div>` : ''}</div>`;
+        setTimeout(() => {
+            const dateInput = document.getElementById('dateInput');
+            const mealType = document.getElementById('mealType');
+            if (dateInput) dateInput.addEventListener('change', (e) => { selectedDate = e.target.value; successMessage = ''; render(); });
+            if (mealType) mealType.addEventListener('change', (e) => { selectedMealForRegistro = e.target.value; render(); });
+        }, 0);
+        return html;
+    }
+
+    function renderAgenda() {
+        const allDates = Object.keys(meals).sort().reverse();
+        return `<div class="space-y-4 pb-8"><div class="bg-white rounded-lg p-6 shadow-lg"><h2 class="text-2xl font-bold gradient-text mb-4">Historial de Comidas</h2>${allDates.length === 0 ? `<p class="text-gray-600 text-center py-8">Aún no has registrado comidas</p>` : `<div class="space-y-4">${allDates.map(date => {const dateObj = new Date(date + 'T00:00:00'); const dayName = ['Dom','Lun','Mar','Mié','Jue','Vie','Sab'][dateObj.getDay()]; const dayMeals = meals[date] || []; let consumed = { LAC: 0, HC: 0, PRO: 0, VER: 0, FRU: 0, GRA: 0 }; dayMeals.forEach(m => Object.keys(consumed).forEach(g => consumed[g] += m[g] || 0)); return `<div class="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg p-4 border-2 border-emerald-300"><div class="flex justify-between items-center mb-3"><h3 class="text-lg font-bold text-gray-900">${dayName} - ${date}</h3><span class="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-3 py-1 rounded-full text-sm font-bold">${dayMeals.length}</span></div><div class="grid grid-cols-3 gap-2 mb-4">${['LAC','HC','PRO','VER','FRU','GRA'].map(g => `<div class="bg-white rounded p-2 text-center border-l-4 border-emerald-500"><p class="text-lg">${groupLabels[g].icon}</p><p class="text-sm font-bold text-gray-900">${consumed[g]}</p></div>`).join('')}</div><div class="space-y-2">${dayMeals.map(m => `<div class="bg-white p-3 rounded border-l-4 border-emerald-600"><p class="font-bold text-sm text-gray-900">${m.name}</p><p class="text-xs text-gray-600">${m.type}</p><div class="flex flex-wrap gap-1">${['LAC','HC','PRO','VER','FRU','GRA'].map(g => m[g] > 0 ? `<span class="nutrition-badge ${getBadgeClass(g)} text-xs px-2 py-1">${m[g]}</span>` : '').join('')}</div></div>`).join('')}</div></div>`}).join('')}</div>`}</div></div>`;
+    }
+
+    function renderEquivalencias() {
+        return `<div class="grid grid-cols-1 md:grid-cols-2 gap-4 pb-8">${Object.entries(equivalencias).map(([grupo, items]) => `<div class="bg-white rounded-lg p-4 shadow"><div class="flex items-center gap-2 mb-3"><div class="nutrition-badge ${getBadgeClass(grupo)}">${groupLabels[grupo].icon}</div><p class="font-bold text-lg text-gray-900">${groupLabels[grupo].name}</p></div><div class="space-y-2">${items.map(item => `<p class="text-sm text-gray-700">• ${item}</p>`).join('')}</div></div>`).join('')}</div>`;
+    }
+
+    function renderConfig() {
+        return `<div class="space-y-4 pb-8"><div class="bg-white rounded-lg p-6 shadow-lg"><h2 class="text-2xl font-bold gradient-text mb-4">Configuración</h2><div class="bg-blue-50 rounded-lg p-4 border-2 border-blue-300 mb-4"><p class="font-bold text-gray-900 mb-3">Notificaciones</p><p class="text-sm text-gray-700 mb-4">Recordatorios en estos horarios:</p><div class="space-y-2 mb-4">${notificationSchedule.map(sched => `<div class="bg-white p-2 rounded border-l-4 border-blue-500"><p class="font-bold text-sm">${sched.titulo} - ${String(sched.hora).padStart(2, '0')}:${String(sched.minuto).padStart(2, '0')}</p><p class="text-xs text-gray-600">${sched.mensaje}</p></div>`).join('')}</div>${notificationsEnabled ? `<button onclick="disableNotifications()" class="w-full bg-red-600 text-white py-2 rounded-lg font-bold hover:bg-red-700 transition">Desactivar</button>` : `<button onclick="enableNotifications()" class="w-full bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700 transition">Activar</button>`}</div><div class="bg-green-50 rounded-lg p-4 border-2 border-green-300"><p class="font-bold text-gray-900 mb-2">Información</p><ul class="text-sm text-gray-700 space-y-1"><li>✓ Datos guardados automáticamente</li><li>✓ Funciona sin internet</li><li>✓ Historial completo</li><li>✓ Notificaciones diarias</li></ul></div></div></div>`;
+    }
+
+    function addMeal() {
+        const nameInput = document.getElementById('foodName');
+        const mealTypeSelect = document.getElementById('mealType');
+        const name = nameInput?.value?.trim() || '';
+        const type = mealTypeSelect?.value || '';
+        if (!name) { alert('Ingresa el nombre de la comida'); return; }
+        if (!type) { alert('Selecciona el tipo de comida'); return; }
+        const meal = { name, type, LAC: parseInt(document.getElementById('val_LAC')?.value || 0) || 0, HC: parseInt(document.getElementById('val_HC')?.value || 0) || 0, PRO: parseInt(document.getElementById('val_PRO')?.value || 0) || 0, VER: parseInt(document.getElementById('val_VER')?.value || 0) || 0, FRU: parseInt(document.getElementById('val_FRU')?.value || 0) || 0, GRA: parseInt(document.getElementById('val_GRA')?.value || 0) || 0 };
+        if (!meals[selectedDate]) meals[selectedDate] = [];
+        meals[selectedDate].push(meal);
+        saveMeals();
+        nameInput.value = '';
+        mealTypeSelect.value = '';
+        selectedMealForRegistro = null;
+        ['LAC','HC','PRO','VER','FRU','GRA'].forEach(g => document.getElementById(`val_${g}`).value = '0');
+        successMessage = '✅ Perfecto! Tu comida se va guardando correctamente';
+        setTimeout(() => { successMessage = ''; render(); }, 3000);
+        render();
+    }
+
+    function deleteMeal(index) {
+        meals[selectedDate].splice(index, 1);
+        if (meals[selectedDate].length === 0) delete meals[selectedDate];
+        saveMeals();
+        render();
+    }
+
+    function requestNotificationPermission() {
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') { notificationsEnabled = true; localStorage.setItem('notificationsEnabled', 'true'); }
+            });
+        }
+    }
+
+    function sendNotification(title, options = {}) {
+        if (!notificationsEnabled) return;
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(title, { icon: '🥗', badge: '🥗', tag: 'mealReminder', ...options });
+        }
+    }
+
+    function scheduleNotifications() {
+        function checkNotifications() {
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+            const currentDay = now.toISOString().split('T')[0];
+            const lastNotificationDay = localStorage.getItem('lastNotificationDay') || '';
+            if (lastNotificationDay === currentDay) return;
+            notificationSchedule.forEach(sched => {
+                if (currentHour === sched.hora && currentMinute === sched.minuto) {
+                    sendNotification(sched.titulo, { body: sched.mensaje, requireInteraction: true });
+                    localStorage.setItem('lastNotificationDay', currentDay);
+                }
+            });
+        }
+        setInterval(checkNotifications, 60000);
+        checkNotifications();
+    }
+
+    function enableNotifications() { requestNotificationPermission(); notificationsEnabled = true; localStorage.setItem('notificationsEnabled', 'true'); render(); }
+    function disableNotifications() { notificationsEnabled = false; localStorage.setItem('notificationsEnabled', 'false'); render(); }
+
+    document.getElementById('btnPlan').addEventListener('click', () => goToTab('plan'));
+    document.getElementById('btnRegistro').addEventListener('click', () => goToTab('registro'));
+    document.getElementById('btnAgenda').addEventListener('click', () => goToTab('agenda'));
+    document.getElementById('btnEquiv').addEventListener('click', () => goToTab('equivalencias'));
+    document.getElementById('btnConfig').addEventListener('click', () => goToTab('config'));
+
+    (async () => {
+        await initDB();
+        meals = await loadMeals();
+        requestNotificationPermission();
+        scheduleNotifications();
+        render();
+    })();
+</script>
+```
+
+</body>
+</html>
